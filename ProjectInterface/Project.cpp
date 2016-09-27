@@ -2,6 +2,7 @@
 #include <fstream>
 #include <stdlib.h>
 #include <windows.h>
+#include <io.h>
 using namespace pj;
 
 static Project* project = nullptr;
@@ -16,8 +17,10 @@ Project::Project() {
 
 	//创建路径
 	string path = string(_statusPath).substr(0, string(_statusPath).rfind("\\"));
-	string cmd = "md " + path;
-	system(cmd.c_str());
+	if (_access(path.c_str(), 0) == -1) {// 等于-1 说明文件夹不存在
+		string cmd = "md " + path;
+		system(cmd.c_str());
+	}
 
 	// 开启读文件的线程
 	thread t1(&Project::readCommand, this);
@@ -69,19 +72,27 @@ void Project::writeTaskMsg(int taskId, const char* taskName, int taskLength, Tas
 }
 void Project::write(bool isException, int taskId, const char* taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum, const char* exceptionMsg) {
 	mutex.lock();
-	//格式化时间 TODO
-	const char* time = "2016-07-03 12:09:12";
+
+	//格式化时间
+	time_t mytime;
+	struct tm *local;
+	time(&mytime);
+	local = localtime(&mytime);
+	char szTime[50] = { 0 };
+	sprintf(szTime, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + local->tm_year), (local->tm_mon + 1), local->tm_mday, local->tm_hour, local->tm_min, local->tm_sec);
+
+	const char* time = szTime;
 	char * isExc = isException ? "true" : "false";
 	int threadId = 1;
 
 	char *msg = new char[1024];
 	memset(msg, '\0', 1024);
 	sprintf(msg, "<process_id=%d,write_file_time=%s,process_name=%s,exception=%s,thread_id=%d,thread_num=%d,task_id=%d,task_name=%s,task_length=%d,task_status=%d,task_done_num=%d,exception_msg=%s/>\n",
-		_processPid, time, _projectNamme, isExc, threadId, _threadNum, taskId, taskName == nullptr ? "null" : taskName, taskLength, taskStatus, taskDoneNum, exceptionMsg == nullptr ? "null": exceptionMsg);
-	
-#if _isDebug
-		printf("write: %s", msg);
-#endif
+		_processPid, time, _projectNamme, isExc, threadId, _threadNum, taskId, taskName == nullptr ? "null" : taskName, taskLength, taskStatus, taskDoneNum, exceptionMsg == nullptr ? "null" : exceptionMsg);
+
+	if (_isDebug) {
+		printf("write: %s\n", msg);
+	}
 
 	//write
 	FILE* statusFile = fopen(_statusPath, "a");
@@ -97,7 +108,6 @@ void Project::write(bool isException, int taskId, const char* taskName, int task
 void Project::readCommand() {
 	while (true)
 	{
-		cout << "readCommand" << endl;
 		ifstream commandFile(_commandPath);
 		if (!commandFile) {
 			Sleep(_readCommandTime);
@@ -117,9 +127,9 @@ void Project::readCommand() {
 		//读完删除文件
 		remove(_commandPath);
 
-#if _isDebug
-		printf("read: %s", command.c_str());
-#endif
+		if (_isDebug){
+			printf("read: %s\n", command.c_str());
+		}
 
 		dealCommand(command);
 

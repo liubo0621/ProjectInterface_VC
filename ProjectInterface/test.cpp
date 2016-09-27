@@ -22,15 +22,9 @@ void check_make_path(string file_name) {
 
 int main(int argc, char **argv)
 {
-	/*Project::getInstance()->isDebug(true);
+	Project::getInstance()->isDebug(true);
 	Project::getInstance()->exception("哈哈");
-	Project::getInstance()->writeTaskMsg(1, "采集", 12, DOING, 20, nullptr);*/
-
-	bool debug = false;
-#if debug
-	cout << "--------------" << endl;
-#endif
-
+	Project::getInstance()->writeTaskMsg(1, "采集", 12, DOING, 20, nullptr);
 	getchar();
 	return 0;
 }
