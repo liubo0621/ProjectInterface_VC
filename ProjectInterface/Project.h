@@ -3,16 +3,19 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <thread>
+#include <mutex>
+#include <stdio.h>
 using namespace std;
 
 namespace pj {
 
-	struct TaskStatus
+	enum TaskStatus
 	{
-		const int DOING = 0x0000001;
-		const int	DONE = 0x0000002;
-		const int EXCEPTION = 0x0000003;
-		const int OTHER = 0x0000000;
+		DOING = 0x0000001,
+		DONE = 0x0000002,
+		EXCEPTION = 0x0000003,
+		OTHER = 0x0000000,
 	};
 
 	typedef function<void(int, int)> StopTask;
@@ -23,32 +26,35 @@ namespace pj {
 		bool threadStarted();
 		void threadClosed();
 		void exception(const char* exeptionMsg);
-		void writeTaskMsg(int taskId, string taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum);
-		void writeTaskMsg(int taskId, string taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum, const char* exeptionMsg);
+		void writeTaskMsg(int taskId, const char* taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum, const char* exeptionMsg = nullptr);
 		
-		void isDebug(bool isDebug) {
-			this->isDebug = isDebug;
-		}
-		void onReceivedStopTaskCommand(StopTask stopTask) {
-			this->stopTask = stopTask;
-		}
+		void isDebug(bool isDebug);
+		void onReceivedStopTaskCommand(StopTask stopTask);
 
 	private:
-		void write(bool isException, int taskId, string taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum, string exceptionMsg);
+		void write(bool isException, int taskId, const char* taskName, int taskLength, TaskStatus taskStatus, int taskDoneNum, const char* exceptionMsg);
 		void readCommand();
 		void dealCommand(string command);
 
-		Project() {};
-		~Project(){
-			delete project;
-
-		}
+		Project();
+		~Project();
 
 	private:
-		StopTask stopTask;
-		static Project* project;
+		TaskStatus _taskStatus;
+		StopTask _stopTask;
+		mutex mutex;//线程互斥对象
 
-		bool isDebug = false;
+		bool _isDebug = false;
+
+		int _threadNum = 0;
+		int _maxThreadNum = 0xfffffff;
+		int _processPid;
+		int _taskDoneNum = 0;
+		int _readCommandTime = 0;
+		
+		char * _projectNamme;
+		char * _statusPath;
+		char * _commandPath;
 	};
 
 }
