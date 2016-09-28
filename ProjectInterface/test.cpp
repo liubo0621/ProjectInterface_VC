@@ -13,11 +13,8 @@ using namespace pj;
 int main(int argc, char **argv)
 {
 	Project::getInstance()->isDebug(true);
-	/*Project::getInstance()->exception("哈哈");
-	Project::getInstance()->writeTaskMsg(1, "采集", 12, DOING, 20, nullptr);*/
-
-/*	string str = "TASK:STOP 111,222";
-	int headPos = str.find(" ")*/;
+	Project::getInstance()->exception("哈哈");
+	Project::getInstance()->writeTaskMsg(1, "采集", 12, DOING, 20, nullptr);
 
 
 

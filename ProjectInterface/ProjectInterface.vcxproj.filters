@@ -34,7 +34,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="project_interface.ini">
+    <None Include="project_config.ini">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

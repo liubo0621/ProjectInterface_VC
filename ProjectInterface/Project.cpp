@@ -2,18 +2,19 @@
 #include <fstream>
 #include <stdlib.h>
 #include <windows.h>
+#include <process.h>
 #include <io.h>
 #include "INIParser.h"
 using namespace pj;
 
 static Project* project = nullptr;
 Project::Project() {
-	//取进程id TODO
-	_processPid = 1;
+	//取进程id
+	_processPid = (int)getpid();
 
-	// 读取ini配置文件 TODO
+	// 读取ini配置文件
 	INIParser iniParser;
-	iniParser.ReadINI("project_interface.ini");
+	iniParser.ReadINI("project_config.ini");
 
 	_readCommandTime = atoi(iniParser.GetValue("project", "read_file_time").c_str()) * 1000;
 	_projectNamme = iniParser.GetValue("project", "name");
@@ -130,7 +131,7 @@ void Project::readCommand() {
 		commandFile.close();
 		delete buffer;
 		//读完删除文件
-		//remove(_commandPath.c_str());
+		remove(_commandPath.c_str());
 
 		if (_isDebug){
 			printf("read: %s\n", command.c_str());
@@ -138,11 +139,11 @@ void Project::readCommand() {
 
 		dealCommand(command);
 
-		//sleep TODO
+		//sleep
 		Sleep(_readCommandTime);
 	}
 }
-// TASK:STOP 111,222
+
 //	TASK:STOP taskId,threadId
 //	THRead:MAX:NUM threadNum
 void Project::dealCommand(string command) {
