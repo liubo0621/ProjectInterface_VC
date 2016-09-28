@@ -41,7 +41,7 @@ namespace pj {
 
 	private:
 		TaskStatus _taskStatus;
-		StopTask _stopTask;
+		StopTask _stopTask =  nullptr;
 		mutex mutex;//线程互斥对象
 
 		bool _isDebug = false;
@@ -52,9 +52,9 @@ namespace pj {
 		int _taskDoneNum = 0;
 		int _readCommandTime = 0;
 		
-		char * _projectNamme;
-		char * _statusPath;
-		char * _commandPath;
+		string _projectNamme;
+		string _statusPath;
+		string _commandPath;
 	};
 
 }

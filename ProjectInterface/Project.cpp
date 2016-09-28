@@ -3,17 +3,22 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <io.h>
+#include "INIParser.h"
 using namespace pj;
 
 static Project* project = nullptr;
 Project::Project() {
 	//取进程id TODO
 	_processPid = 1;
+
 	// 读取ini配置文件 TODO
-	_readCommandTime = 1000;
-	_projectNamme = "测试";
-	_statusPath = "D:\\process\\1.txt";
-	_commandPath = "D:\\process\\2.txt";
+	INIParser iniParser;
+	iniParser.ReadINI("project_interface.ini");
+
+	_readCommandTime = atoi(iniParser.GetValue("project", "read_file_time").c_str()) * 1000;
+	_projectNamme = iniParser.GetValue("project", "name");
+	_statusPath = iniParser.GetValue("project", "status_file");
+	_commandPath = iniParser.GetValue("client", "command_file");
 
 	//创建路径
 	string path = string(_statusPath).substr(0, string(_statusPath).rfind("\\"));
@@ -88,14 +93,14 @@ void Project::write(bool isException, int taskId, const char* taskName, int task
 	char *msg = new char[1024];
 	memset(msg, '\0', 1024);
 	sprintf(msg, "<process_id=%d,write_file_time=%s,process_name=%s,exception=%s,thread_id=%d,thread_num=%d,task_id=%d,task_name=%s,task_length=%d,task_status=%d,task_done_num=%d,exception_msg=%s/>\n",
-		_processPid, time, _projectNamme, isExc, threadId, _threadNum, taskId, taskName == nullptr ? "null" : taskName, taskLength, taskStatus, taskDoneNum, exceptionMsg == nullptr ? "null" : exceptionMsg);
+		_processPid, time, _projectNamme.c_str(), isExc, threadId, _threadNum, taskId, taskName == nullptr ? "null" : taskName, taskLength, taskStatus, taskDoneNum, exceptionMsg == nullptr ? "null" : exceptionMsg);
 
 	if (_isDebug) {
 		printf("write: %s\n", msg);
 	}
 
 	//write
-	FILE* statusFile = fopen(_statusPath, "a");
+	FILE* statusFile = fopen(_statusPath.c_str(), "a");
 	if (statusFile == nullptr) {
 		printf("write project's status error");
 		mutex.unlock();
@@ -125,7 +130,7 @@ void Project::readCommand() {
 		commandFile.close();
 		delete buffer;
 		//读完删除文件
-		remove(_commandPath);
+		//remove(_commandPath.c_str());
 
 		if (_isDebug){
 			printf("read: %s\n", command.c_str());
@@ -137,11 +142,24 @@ void Project::readCommand() {
 		Sleep(_readCommandTime);
 	}
 }
-
+// TASK:STOP 111,222
 //	TASK:STOP taskId,threadId
 //	THRead:MAX:NUM threadNum
 void Project::dealCommand(string command) {
-
+	string head = command.substr(0, command.find(" "));
+	if (head == "TASK:STOP")
+	{
+		int taskId = atoi(command.substr(command.find(" "), command.find(",")).c_str());
+		int threadId = atoi(command.substr(command.find(",") + 1, command.length()).c_str());
+		if (_stopTask)
+		{
+			_stopTask(taskId, threadId);
+		}
+	}
+	else if (head == "THRead:MAX:NUM") 
+	{
+		_maxThreadNum = atoi(command.substr(command.find(" ") + 1, command.length()).c_str());
+	}
 }
 
 void Project::isDebug(bool isDebug) {
